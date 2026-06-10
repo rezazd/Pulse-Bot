@@ -31,7 +31,7 @@ Run the following command on your Ubuntu server (Root required):
 ```bash
 
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rezazd/Pulse-Bot/main/install.sh)"
-
+```
 
 
 📋 Prerequisites
