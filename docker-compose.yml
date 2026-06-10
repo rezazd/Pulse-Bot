@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: pulse_bot
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Tehran
+    networks:
+      - pulse_network
+
+  mariadb:
+    image: mariadb:10.11
+    container_name: pulse_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      TZ: Asia/Tehran
+    volumes:
+      - pulse_db_data:/var/lib/mysql
+    networks:
+      - pulse_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  pulse_network:
+    driver: bridge
+
+volumes:
+  pulse_db_data:
