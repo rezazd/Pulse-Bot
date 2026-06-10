@@ -30,7 +30,7 @@ Run the following command on your Ubuntu server (Root required):
 
 ```bash
 
-sudo bash -c "$(curl -sL https://raw.githubusercontent.com/YourUsername/Pulse-Bot/main/install.sh)"
+sudo bash -c "$(curl -sL https://raw.githubusercontent.com/rezazd/Pulse-Bot/main/install.sh)"
 
 
 
@@ -44,5 +44,5 @@ A Telegram Bot Token (from @BotFather)
 
 👨‍💻 Developer
 
-Developed with ❤️ by \[Your Name/Nickname].
+Developed with ❤️ by \[Reza_Zd].
 
