@@ -60,7 +60,7 @@ done
 DB_PASS=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)
 
 # 5. دانلود یا آپدیت سورس کد از گیت‌هاب
-REPO_URL="https://github.com/YourUsername/Pulse-Bot.git" # ⚠️ آدرس گیت‌هاب خود را اینجا بگذارید
+REPO_URL="https://github.com/rezazd/Pulse-Bot.git"
 DEST_DIR="/opt/pulse-bot"
 
 echo -e "\n${YELLOW}📥 Fetching source code...${RESET}"
