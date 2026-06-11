@@ -6,14 +6,14 @@ from core.config import config
 # تنظیم لاگر برای دیتابیس
 logger = logging.getLogger(__name__)
 
-# ایجاد موتور دیتابیس با تنظیمات بهینه برای جلوگیری از قطعی
+# ایجاد موتور دیتابیس با تنظیمات بهینه
 engine = create_async_engine(
     config.DATABASE_URL, 
     echo=False, 
-    pool_recycle=3600,
-    pool_pre_ping=True,  # بسیار مهم: چک کردن زنده بودن کانکشن قبل از کوئری
+    pool_recycle=1800,   # زمان بازیافت کانکشن‌ها (نیم ساعت)
+    pool_pre_ping=False, # 🔴 خاموش کردن پینگ برای حل باگ aiomysql
     pool_size=10,        # تعداد کانکشن‌های همزمان
-    max_overflow=20      # حداکثر کانکشن‌های مازاد در زمان ترافیک بالا
+    max_overflow=20      # حداکثر کانکشن‌های مازاد
 )
 
 # ایجاد Session ساز برای عملیات‌های دیتابیس
@@ -27,7 +27,6 @@ AsyncSessionLocal = async_sessionmaker(
 async def get_db():
     """
     یک Generator برای تولید Session دیتابیس.
-    این تابع در هندلرها استفاده می‌شود تا پس از پایان کار، کانکشن به صورت خودکار بسته شود.
     """
     async with AsyncSessionLocal() as session:
         try:
