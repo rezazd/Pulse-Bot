@@ -22,10 +22,12 @@ class Settings(BaseSettings):
     # تنظیمات خواندن از فایل .env
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # تبدیل خودکار رشته ادمین‌ها (مثلاً "123,456") به لیست اعداد [123, 456]
+    # تبدیل خودکار ادمین‌ها به لیست (پشتیبانی از رشته و عدد تکی)
     @field_validator("ADMIN_IDS", mode="before")
     @classmethod
     def parse_admin_ids(cls, value):
+        if isinstance(value, (int, float)):
+            return [int(value)]
         if isinstance(value, str):
             return [int(admin_id.strip()) for admin_id in value.split(",") if admin_id.strip()]
         return value
