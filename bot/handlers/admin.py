@@ -8,7 +8,6 @@ from bot.keyboards.inline import admin_main_kb
 
 router = Router()
 
-# فیلتر سفارشی برای بررسی ادمین بودن
 def is_admin(user_id: int) -> bool:
     return user_id in config.ADMIN_IDS
 
@@ -37,7 +36,6 @@ async def approve_receipt(callback: types.CallbackQuery, bot: Bot):
         invoice.status = "approved"
         await session.commit()
 
-        # جلوگیری از کرش در صورت نداشتن کپشن و حذف دکمه‌ها پس از تایید
         current_caption = callback.message.caption or ""
         await callback.message.edit_caption(
             caption=current_caption + "\n\n✅ <b>تایید و شارژ شد.</b>", 
@@ -53,6 +51,8 @@ async def approve_receipt(callback: types.CallbackQuery, bot: Bot):
             )
         except Exception:
             pass
+    
+    await callback.answer("فیش تایید شد.", show_alert=False)
 
 @router.callback_query(F.data.startswith("reject_receipt_"))
 async def reject_receipt(callback: types.CallbackQuery, bot: Bot):
@@ -84,38 +84,13 @@ async def reject_receipt(callback: types.CallbackQuery, bot: Bot):
                 )
             except Exception:
                 pass
-                # ==========================================
-# رفع باگ دکمه‌های کیبورد پایین صفحه
-# ==========================================
-
-@router.message(F.text == "📦 سرویس‌های من")
-async def show_my_services_reply_kb(message: types.Message):
-    """هندلر دکمه 'سرویس‌های من' از کیبورد اصلی"""
-    telegram_id = message.from_user.id
     
-    async with AsyncSessionLocal() as session:
-        stmt = select(User).options(selectinload(User.services)).where(User.telegram_id == telegram_id)
-        user = (await session.execute(stmt)).scalar_one_or_none()
-        
-        if not user or not user.services:
-            await message.answer("📦 شما هنوز سرویس فعالی ندارید.")
-            return
-            
-        await message.answer(
-            "📦 <b>لیست سرویس‌های شما:</b>\nبرای مدیریت، روی سرویس مورد نظر کلیک کنید:",
-            reply_markup=my_services_list_kb(list(user.services)),
-            parse_mode="HTML"
-        )
+    await callback.answer("فیش رد شد.", show_alert=False)
 
-@router.message(F.text == "🎁 دریافت تست رایگان")
-async def free_test_placeholder(message: types.Message):
-    await message.answer("🎁 <b>اکانت تست رایگان</b>\n\nاین قابلیت در آپدیت‌های بعدی ربات (نسخه 2.0) فعال خواهد شد! 🚀", parse_mode="HTML")
-
-@router.message(F.text == "🎧 پشتیبانی")
-async def support_placeholder(message: types.Message):
-    # می‌تونی آیدی خودت رو اینجا جایگزین کنی
-    await message.answer("🎧 <b>پشتیبانی</b>\n\nبرای ارتباط با مدیریت و رفع مشکلات، به آیدی زیر پیام دهید:\n💬 @YourAdminID", parse_mode="HTML")
-
-@router.message(F.text == "📚 آموزش اتصال")
-async def tutorial_placeholder(message: types.Message):
-    await message.answer("📚 <b>آموزش اتصال</b>\n\nلینک آموزش‌های اتصال به زودی در این بخش قرار می‌گیرد.", parse_mode="HTML")
+# --- هندلرهای دکمه‌های پنل ادمین ---
+@router.callback_query(F.data.in_(["admin_stats", "admin_users", "admin_plans", "admin_broadcast"]))
+async def admin_menu_placeholders(callback: types.CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        return
+    # این بخش‌ها را می‌توانید در آینده توسعه دهید
+    await callback.answer("🛠 این بخش در حال توسعه است و به زودی فعال می‌شود.", show_alert=True)
