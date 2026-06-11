@@ -84,3 +84,11 @@ async def reject_receipt(callback: types.CallbackQuery, bot: Bot):
                 )
             except Exception:
                 pass
+# ==========================================
+# هندلر دکمه‌های در دست ساخت پنل مدیریت
+# ==========================================
+
+@router.callback_query(F.data.in_(["admin_stats", "admin_users", "admin_plans", "admin_broadcast"]))
+async def admin_placeholders(callback: types.CallbackQuery):
+    """پیام 'به زودی' برای آپشن‌های پنل مدیریت که در آپدیت‌های بعدی اضافه می‌شوند"""
+    await callback.answer("⏳ این قابلیت در آپدیت‌های بعدی (فاز توسعه) اضافه خواهد شد.", show_alert=True)
