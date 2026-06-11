@@ -1,4 +1,5 @@
 from aiogram import Router, F, types, Bot
+from aiogram.filters import StateFilter
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from core.config import config
@@ -11,26 +12,24 @@ router = Router()
 def is_admin(user_id: int) -> bool:
     return user_id in config.ADMIN_IDS
 
-@router.message(F.text == "⚙️ پنل مدیریت (Admin)")
+@router.message(F.text.contains("پنل مدیریت"), StateFilter("*"))
 async def show_admin_panel(message: types.Message):
     if not is_admin(message.from_user.id):
         return
     await message.answer("👨‍💻 <b>پنل مدیریت ربات</b>\n\nیک گزینه را انتخاب کنید:", reply_markup=admin_main_kb(), parse_mode="HTML")
 
-@router.callback_query(F.data.startswith("approve_receipt_"))
+@router.callback_query(F.data.startswith("approve_receipt_"), StateFilter("*"))
 async def approve_receipt(callback: types.CallbackQuery, bot: Bot):
     if not is_admin(callback.from_user.id):
         return
 
     invoice_id = int(callback.data.split("_")[2])
-
     async with AsyncSessionLocal() as session:
         stmt = select(Invoice).options(selectinload(Invoice.user)).where(Invoice.id == invoice_id)
         invoice = (await session.execute(stmt)).scalar_one_or_none()
 
         if not invoice or invoice.status != "pending":
-            await callback.answer("❌ این فیش قبلاً بررسی شده است.", show_alert=True)
-            return
+            return await callback.answer("❌ این فیش قبلاً بررسی شده است.", show_alert=True)
 
         invoice.user.wallet_balance += invoice.amount
         invoice.status = "approved"
@@ -38,9 +37,7 @@ async def approve_receipt(callback: types.CallbackQuery, bot: Bot):
 
         current_caption = callback.message.caption or ""
         await callback.message.edit_caption(
-            caption=current_caption + "\n\n✅ <b>تایید و شارژ شد.</b>", 
-            reply_markup=None, 
-            parse_mode="HTML"
+            caption=current_caption + "\n\n✅ <b>تایید و شارژ شد.</b>", reply_markup=None, parse_mode="HTML"
         )
 
         try:
@@ -51,16 +48,14 @@ async def approve_receipt(callback: types.CallbackQuery, bot: Bot):
             )
         except Exception:
             pass
-    
     await callback.answer("فیش تایید شد.", show_alert=False)
 
-@router.callback_query(F.data.startswith("reject_receipt_"))
+@router.callback_query(F.data.startswith("reject_receipt_"), StateFilter("*"))
 async def reject_receipt(callback: types.CallbackQuery, bot: Bot):
     if not is_admin(callback.from_user.id):
         return
 
     invoice_id = int(callback.data.split("_")[2])
-
     async with AsyncSessionLocal() as session:
         stmt = select(Invoice).options(selectinload(Invoice.user)).where(Invoice.id == invoice_id)
         invoice = (await session.execute(stmt)).scalar_one_or_none()
@@ -71,26 +66,31 @@ async def reject_receipt(callback: types.CallbackQuery, bot: Bot):
 
             current_caption = callback.message.caption or ""
             await callback.message.edit_caption(
-                caption=current_caption + "\n\n❌ <b>رد شد.</b>", 
-                reply_markup=None, 
-                parse_mode="HTML"
+                caption=current_caption + "\n\n❌ <b>رد شد.</b>", reply_markup=None, parse_mode="HTML"
             )
 
             try:
                 await bot.send_message(
                     chat_id=invoice.user.telegram_id,
-                    text="❌ <b>فیش شما توسط مدیریت رد شد.</b>",
-                    parse_mode="HTML"
+                    text="❌ <b>فیش شما توسط مدیریت رد شد.</b>", parse_mode="HTML"
                 )
             except Exception:
                 pass
-    
     await callback.answer("فیش رد شد.", show_alert=False)
 
-# --- هندلرهای دکمه‌های پنل ادمین ---
-@router.callback_query(F.data.in_(["admin_stats", "admin_users", "admin_plans", "admin_broadcast"]))
+# --- هندلرهای دکمه‌های پنل ادمین (اصلاح شده) ---
+@router.callback_query(F.data.startswith("admin_"), StateFilter("*"))
 async def admin_menu_placeholders(callback: types.CallbackQuery):
     if not is_admin(callback.from_user.id):
         return
-    # این بخش‌ها را می‌توانید در آینده توسعه دهید
-    await callback.answer("🛠 این بخش در حال توسعه است و به زودی فعال می‌شود.", show_alert=True)
+    
+    if callback.data == "admin_stats":
+        await callback.answer("📊 آمار سرور: این بخش در حال توسعه است.", show_alert=True)
+    elif callback.data == "admin_users":
+        await callback.answer("👥 مدیریت کاربران: این بخش در حال توسعه است.", show_alert=True)
+    elif callback.data == "admin_plans":
+        await callback.answer("📝 مدیریت پلن‌ها: این بخش در حال توسعه است.", show_alert=True)
+    elif callback.data == "admin_broadcast":
+        await callback.answer("📢 ارسال پیام همگانی: این بخش در حال توسعه است.", show_alert=True)
+    else:
+        await callback.answer("🛠 این بخش به زودی فعال می‌شود.", show_alert=True)
