@@ -38,6 +38,7 @@ async def process_buy_plan(callback: types.CallbackQuery):
         f"آیا از خرید این سرویس اطمینان دارید؟"
     )
     await callback.message.edit_text(text, reply_markup=confirm_buy_kb(plan.id), parse_mode="HTML")
+    await callback.answer()
 
 @router.callback_query(F.data.startswith("confirm_buy_"))
 async def confirm_buy(callback: types.CallbackQuery):
@@ -52,10 +53,12 @@ async def confirm_buy(callback: types.CallbackQuery):
 
         if not user or not plan:
             await callback.message.edit_text("❌ <b>خطا در یافتن اطلاعات کاربر یا پلن.</b>", parse_mode="HTML")
+            await callback.answer()
             return
 
         if user.wallet_balance < plan.price:
             await callback.message.edit_text("❌ <b>موجودی کافی نیست!</b> لطفاً کیف پول خود را شارژ کنید.", parse_mode="HTML")
+            await callback.answer()
             return
 
         # کسر از کیف پول
@@ -98,3 +101,5 @@ async def confirm_buy(callback: types.CallbackQuery):
         except Exception as e:
             await session.rollback()
             await callback.message.edit_text("❌ <b>خطای سیستمی رخ داد!</b> موجودی شما کسر نشد.", parse_mode="HTML")
+            
+    await callback.answer() # پایان موفقیت آمیز کلیک
